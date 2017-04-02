@@ -17,6 +17,21 @@ class ZillowWrapper(object):
         """
         self.api_key = api_key
 
+    def get_deep_comps(self, zpid, count=25):
+        """
+        implement the GetDeepComps API
+        :param zpid: 
+        :param count: 
+        :return: 
+        """
+        url = 'http://www.zillow.com/webservice/GetDeepComps.htm'
+        params = {
+            'zws-id':self.api_key,
+            'count':count,
+            'zpid':zpid
+        }
+        return self.get_data(url, params)
+
     def get_deep_search_results(self, address, zipcode):
         """
         GetDeepSearchResults API
@@ -45,7 +60,7 @@ class ZillowWrapper(object):
     def get_data(self, url, params):
         """
         """
-
+        #request.get returns a response
         try:
             request = requests.get(
                 url=url,
@@ -131,6 +146,24 @@ class ZillowResults(object):
         return self.data.find(
             self.attribute_mapping['last_sold_price']).attrib["currency"]
 
+class GetDeepCompsResults(ZillowResults):
+    """
+    make life easy, only implement the functionality to return a list of zpid
+    """
+
+
+    def toList(self, data, *args, **kwargs):
+        """
+        I have no idea what args and kwargs is for...
+        """
+        self.data = data.findall('response/properties/comparables')[0]
+        comparable_entities = self.data.findall('comp') #this is a list
+        result_list = []
+        for p in comparable_entities:
+            result_list.append(p[0].text)
+        return result_list
+
+
 
 class GetDeepSearchResults(ZillowResults):
     """
@@ -183,6 +216,9 @@ class GetUpdatedPropertyDetails(ZillowResults):
         'home_detail_link': 'links/homeDetails',
         'graph_data_link': '',
         'map_this_home_link': '',
+        'street':'address/street',
+        'zipcode':'address/zipcode',
+        'city':'address/city',
         'latitude': 'address/latitude',
         'longitude': 'address/longitude',
         'tax_year': '',
@@ -194,6 +230,7 @@ class GetUpdatedPropertyDetails(ZillowResults):
         'bedrooms': 'editedFacts/bedrooms',
         'last_sold_date': '',
         'last_sold_price': '',
+        'price':'price',
         # new attributes in GetUpdatedPropertyDetails
         'photo_gallery': 'links/photoGallery',
         'home_info': 'links/homeInfo',
